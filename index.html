@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script type="text/javascript" src="jquery.min.js"></script>
+    <script type="text/javascript" src="qrcode.js"></script>
+  </head>
+
+  <body>
+    <br><br>
+    @<input id="input" placeholder="username"></input> <button onclick="draw()">draw</button> <a id="dl-btn"><button>download PNG</button></a>
+    <br><br><br>
+    <canvas id="myCanvas" width="600" height="600" style="border:1px solid #d3d3d3;">
+    Your browser does not support the HTML canvas tag.</canvas>
+
+    <script>
+      function draw(){
+        // initialize variables
+        var canvas = document.getElementById("myCanvas");
+        const w = canvas.width;
+        const h = canvas.height;
+        var ctx = canvas.getContext("2d");
+        const username = document.getElementById("input").value;
+        const pre_url = 'https://senseg.net/some-other-url-stuff?user=';
+        const post_url = '&some-other-variables-queries-url-bogus=morethingshere#anchor-link-dummy-text';
+        const to_encode_string = pre_url + username + post_url;
+
+        // make QR png element
+        var qr_div = document.createElement("div");
+        var qrcode = new QRCode(qr_div, {
+        	width : 100,
+        	height : 100,
+          colorDark : "#000000",
+        	colorLight : "#ffffff",
+        	correctLevel : QRCode.CorrectLevel.H
+        });
+        qrcode.makeCode(to_encode_string);
+        var qr_img_elem = qr_div.childNodes[1];
+        qr_img_elem.onload = function(){
+          // set canvas white background for png
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(0,0,w,h);
+          ctx.drawImage(qr_img_elem, 33, 71);
+
+          // prep png for download
+          var anchor = document.getElementById("dl-btn");
+          anchor.href = canvas.toDataURL("image/png");
+          anchor.download = username + "-qr.PNG";
+        }
+
+      }
+
+      // set enter key to trigger draw function
+      $("#input").on("keydown", function (e) {
+      		if (e.keyCode == 13) {
+      			draw();
+      		}
+      	});
+
+
+    </script>
+
+    <br><br><br><br><br><br>
+    <hr>
+    <br><br>
+    Design to mimic:<br>
+    <img src="design.png" width="400" id="design"/>
+
+  </body>
+</html>
