@@ -3,11 +3,15 @@
   <head>
     <script type="text/javascript" src="jquery.min.js"></script>
     <script type="text/javascript" src="qrcode.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;1,300;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
   </head>
 
   <body>
     <br><br>
-    @<input id="input" placeholder="username"></input> <button onclick="draw()">draw</button> <a id="dl-btn"><button>download PNG</button></a>
+    @<input id="input" placeholder="username" value="eugenio"></input> <button onclick="draw()">draw</button> <a id="dl-btn"><button>download PNG</button></a>
     <br><br><br>
     <canvas id="myCanvas" width="600" height="600" style="border:1px solid #d3d3d3;">
     Your browser does not support the HTML canvas tag.</canvas>
@@ -15,6 +19,11 @@
     <script>
       function draw(){
         // initialize variables
+        const qr_size = 300;
+        const text_size = 35;
+        const margin = 3;
+        const text_margin = 12;
+        const pixel_font_multiplier = 14;
         var canvas = document.getElementById("myCanvas");
         const w = canvas.width;
         const h = canvas.height;
@@ -27,8 +36,8 @@
         // make QR png element
         var qr_div = document.createElement("div");
         var qrcode = new QRCode(qr_div, {
-        	width : 100,
-        	height : 100,
+        	width : qr_size * 4,
+        	height : qr_size * 4,
           colorDark : "#000000",
         	colorLight : "#ffffff",
         	correctLevel : QRCode.CorrectLevel.H
@@ -36,15 +45,52 @@
         qrcode.makeCode(to_encode_string);
         var qr_img_elem = qr_div.childNodes[1];
         qr_img_elem.onload = function(){
-          // set canvas white background for png
-          ctx.fillStyle = '#000000';
-          ctx.fillRect(0,0,w,h);
-          ctx.drawImage(qr_img_elem, 33, 71);
+          //make downloadable
+          qr_img_elem.crossorigin="anonymous";
 
-          // prep png for download
-          var anchor = document.getElementById("dl-btn");
-          anchor.href = canvas.toDataURL("image/png");
-          anchor.download = username + "-qr.PNG";
+          // set canvas white background for png
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0,0,w,h);
+          ctx.save(); // so we can transform QR drawn to center, rotated
+          //Set the origin to the center of the image
+          ctx.translate(w/2, h/2);
+          ctx.rotate(-90 * Math.PI/180);
+          //draw the image
+          ctx.drawImage(qr_img_elem, -qr_size/2, -qr_size/2, qr_size, qr_size);
+          ctx.restore(); // Restore canvas state as saved from above, for text and further drawing.
+
+          // draw white space for text
+          ctx.fillStyle = '#ffffff';
+          var username_w = text_size * 4;
+          ctx.fillRect(w/2-username_w/2,h/2-text_size/2,username_w,text_size);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(w/2+qr_size/2-text_size,h/2-qr_size/2-text_size,text_size * 2,text_size * 2);
+
+          // make logo element
+          var logo_img = document.createElement("img");
+          logo_img.src = 'logo.svg';
+          logo_img.onload = function(){
+            logo_img.crossorigin="anonymous";
+            ctx.drawImage(logo_img, w/2+qr_size/2 - text_size + margin, h/2-qr_size/2-text_size - margin, text_size *2, text_size*2);
+            ctx.fillStyle = '#000000';
+            ctx.font = '18px Roboto Mono';
+            ctx.fillText('@' + username, w/2-username.length * pixel_font_multiplier/2 + text_margin,h/2+text_size/2 - text_margin);
+
+            ctx.fillStyle = '#000000';
+            ctx.font = '18px Roboto Mono';
+            ctx.fillText('¿Efectivo? Nunca más.', w/2-qr_size/2 + text_margin * 2, h/2-qr_size/2 - text_margin);
+            ctx.fillText('Sencillo. Seguro.', w/2-qr_size/2 + text_margin * 5 , h/2 + qr_size/2 + text_margin*2 );
+            ctx.font = 'italic 14px Roboto Mono';
+            ctx.fillText('senseg.net', w/2-qr_size/2 + text_margin * 9 , h/2 + qr_size/2 + text_margin*7 );
+
+            //¿Efectivo? Nunca más.
+
+            // prep png for download
+            var anchor = document.getElementById("dl-btn");
+            anchor.href = canvas.toDataURL("image/png");
+            anchor.download = username + "-qr.PNG";
+          }
+
         }
 
       }
